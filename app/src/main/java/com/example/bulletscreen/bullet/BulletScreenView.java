@@ -162,6 +162,10 @@ public class BulletScreenView extends BaseSurfaceView {
         this.onBulletClickListener = listener;
     }
 
+    public boolean isPaused() {
+        return paused;
+    }
+
     public interface OnBulletClickListener {
         void onBulletClick(Bullet bullet);
     }

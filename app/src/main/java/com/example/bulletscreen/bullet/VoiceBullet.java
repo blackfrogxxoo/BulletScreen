@@ -19,8 +19,8 @@ import java.util.Map;
 class VoiceBullet extends Bullet {
     private static final int DP_HEIGHT = 30;
     private static final double ONCE_DRAW_TIMES = 100;
-    private static final int DP_LINE_WIDTH = 3;
-    private static final int DP_LINE_DIVIDER = 1;
+    private static final float DP_LINE_WIDTH = 2f;
+    private static final float DP_LINE_DIVIDER = 1.5f;
     private static final int LINE_COUNT_ONE_WAVE = 20;
     final String bitmapUrl;
     final Matrix matrix = new Matrix();
@@ -62,14 +62,17 @@ class VoiceBullet extends Bullet {
         }
         float x = 0;
         boolean heightInited = ftHeights.size() != 0;
+        paint.setStrokeWidth(density * DP_LINE_WIDTH);
         for(int i = 0; x < rectF.width() - 1.2 * rectF.height(); i ++) {
             x = i * density * (DP_LINE_WIDTH + DP_LINE_DIVIDER) + 0.5f * density * DP_LINE_WIDTH;
             float y = rectF.height() / 2;
             float lineHeight;
-            if(!heightInited) {
+            if(parent.isPaused()) {
+                lineHeight = density * 2;
+            } else if(!heightInited) {
                 lineHeight = (float) (Math.random() * rectF.height() * 0.6f);
                 ftHeights.put(i, lineHeight);
-            } else if(drawTimes % 7 != 0){
+            } else if(drawTimes % 10 != 0){
                 lineHeight = ftHeights.get(i);
             } else {
                 lineHeight = (float) (Math.random() * rectF.height() * 0.6f);
