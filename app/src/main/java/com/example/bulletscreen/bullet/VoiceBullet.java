@@ -21,6 +21,7 @@ class VoiceBullet extends Bullet {
     private static final double ONCE_DRAW_TIMES = 100;
     private static final float DP_LINE_WIDTH = 2f;
     private static final float DP_LINE_DIVIDER = 1.5f;
+    private static final float DP_AVATAR_PADDING = 2f;
     private static final int LINE_COUNT_ONE_WAVE = 20;
     final String bitmapUrl;
     final Matrix matrix = new Matrix();
@@ -51,9 +52,9 @@ class VoiceBullet extends Bullet {
         canvas.drawRoundRect(rectF, radius, radius, paint);
         paint.setColor(Color.WHITE);
         if (bitmap != null) {
-            float size = rectF.bottom - rectF.top;
+            float size = rectF.bottom - rectF.top - 2 * DP_AVATAR_PADDING * density;
             matrix.setScale(size / bitmap.getWidth(), size / bitmap.getHeight());
-            matrix.postTranslate(point.x, point.y);
+            matrix.postTranslate(point.x + DP_AVATAR_PADDING * density, point.y + DP_AVATAR_PADDING * density);
             canvas.drawBitmap(bitmap, matrix, paint);
         }
         drawTimes ++;
