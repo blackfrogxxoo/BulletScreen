@@ -22,7 +22,7 @@ public class BulletGenerator {
         for(Comments.RowsBean comment : commentList) {
             int videoPosition = (int) (Math.random() * 10000);
             if(!TextUtils.isEmpty(comment.audio_file_addr)) {
-                int duration = (int) (Math.random() * 3000 + 3000);
+                int duration = (int) (Math.random() * 13000 + 3000);
                 bullets.add(generate(bulletScreenView, videoPosition, comment.user_info.avatar_url, duration));
             } else {
                 bullets.add(generate(bulletScreenView, videoPosition, comment.contents, false));
