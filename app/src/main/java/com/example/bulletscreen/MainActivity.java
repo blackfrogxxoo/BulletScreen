@@ -10,6 +10,7 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,11 +18,14 @@ import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.example.bulletscreen.bullet.Bullet;
 import com.example.bulletscreen.bullet.BulletGenerator;
 import com.example.bulletscreen.bullet.BulletScreenView;
 import com.google.gson.Gson;
+
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
     private static final String COMMENTS_TEXT =
@@ -44,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         adapter = new Adapter(this, comments);
         rv.setAdapter(adapter);
     }
+
+
 
     static class Adapter extends RecyclerView.Adapter<Holder> {
         private static final int VIDEO_DURATION = 23000;
@@ -68,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
             holder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    holder.bulletScreenView.addBullet(
-                            BulletGenerator.generate(holder.bulletScreenView, (int) holder.fakeVideoDurationAnimator.getAnimatedValue(), "我的弹幕", true));
+//                    holder.bulletScreenView.addBullet(
+//                            BulletGenerator.generate(holder.bulletScreenView, (int) holder.fakeVideoDurationAnimator.getAnimatedValue(), "我的弹幕", true));
                 }
             });
             holder.bulletScreenView.setBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
@@ -94,6 +100,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
+            File file = new File(FileUtils.getExternalAssetsDir(context), "bg.mp4");
+            Log.i("fuck", "onBindViewHolder: " + file.getAbsolutePath());
+            holder.videoView.setVideoPath(file.getAbsolutePath());
+            holder.videoView.start();
         }
 
         @Override
@@ -112,6 +122,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
                     int videoPosition = (int) animation.getAnimatedValue();
+                    videoPosition = holder.videoView.getCurrentPosition();
+                    MulMediaPlayerController.getInstance().startPlay(videoPosition);
+
                     holder.tvPosition.setText(videoPosition + "/" + VIDEO_DURATION);
                     holder.bulletScreenView.onVideoPosition(videoPosition);
                 }
@@ -119,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
             holder.fakeVideoDurationAnimator.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
+                    MulMediaPlayerController.getInstance().reset();
                     holder.bulletScreenView.onVideoStart();
                 }
 
@@ -164,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tvPosition;
         Button button;
         BulletScreenView bulletScreenView;
+        VideoView videoView;
 
         ValueAnimator fakeVideoDurationAnimator;
 
@@ -172,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
             tvPosition = itemView.findViewById(R.id.tvPosition);
             button = itemView.findViewById(R.id.btn_send);
             bulletScreenView = itemView.findViewById(R.id.bulletScreenView);
+            videoView = itemView.findViewById(R.id.videoView);
         }
     }
 }

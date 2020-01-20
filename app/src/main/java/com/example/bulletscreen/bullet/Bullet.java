@@ -12,11 +12,21 @@ public abstract class Bullet implements Comparable {
     int duration;
     Point point;
     final RectF rectF = new RectF();
+    String id;
 
-    Bullet(BulletScreenView parent, int videoPosition) {
+    public int getVideoPosition() {
+        return videoPosition;
+    }
+
+    Bullet(BulletScreenView parent, String id, int videoPosition) {
         this.parent = parent;
         this.videoPosition = videoPosition;
         density = parent.getResources().getDisplayMetrics().density;
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
     }
 
     void onDraw(Canvas canvas, Paint paint) {

@@ -7,6 +7,11 @@
     android:background="#73003859"
     tools:context=".MainActivity">
 
+    <VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <com.example.bulletscreen.bullet.BulletScreenView
         android:id="@+id/bulletScreenView"
         android:layout_width="match_parent"

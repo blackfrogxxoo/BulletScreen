@@ -6,15 +6,27 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.example.bulletscreen.bullet.VoiceBullet;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class MulMediaPlayerController {
     private static final String TAG = "MulMediaPlayer";
     private final ProgressRunnable progressRunnable;
-    private List<Barrage> barrages;
+    private List<VoiceBullet> barrages = new ArrayList<>();
+
+    public void reset() {
+        barrages.clear();
+        for (MediaPlayer mediaPlayer : playerHashMap.values()) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        playerHashMap.clear();
+    }
 
     private static class Singleton {
         static final MulMediaPlayerController context = new MulMediaPlayerController();
@@ -40,7 +52,7 @@ public class MulMediaPlayerController {
 
     public void onlyPlay(String id) {
         for (int i = 0; i < playerHashMap.size(); i++) {
-            Barrage barrage = barrages.get(i);
+            VoiceBullet barrage = barrages.get(i);
             MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
             if (id.equals(barrage.getId())) {
                 if (mediaPlayer != null) {
@@ -55,21 +67,23 @@ public class MulMediaPlayerController {
     }
 
 
-    public void addBarrages(List<Barrage> barrages) {
+    public void addBarrages(List<VoiceBullet> barrages) {
         this.barrages = barrages;
-        for (Barrage barrage : barrages) {
+        for (VoiceBullet barrage : barrages) {
             addBarrage(barrage);
         }
     }
 
-    public void addBarrage(Barrage barrage) {
+    public void addBarrage(VoiceBullet barrage) {
+        barrages.add(barrage);
         MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
         if (mediaPlayer == null) {
             mediaPlayer = new MediaPlayer();
             playerHashMap.put(barrage.getId(), mediaPlayer);
         }
         try {
-            File file = new File(FileUtils.getExternalAssetsDir(context), barrage.getUrl());
+            File file = new File(barrage.getVoiceUrl());
+
 
             //获得播放源访问入口
 //            AssetFileDescriptor afd = context.getResources().openRawResourceFd(rawSource); // 注意这里的区别
@@ -101,9 +115,21 @@ public class MulMediaPlayerController {
     }
 
 
-    public void startPlay() {
+    public void startPlay(int currentPosition) {
+        if (barrages == null || barrages.size() <= 0) {
+            return;
+        }
 
-        handler.post(progressRunnable);
+        for (int i = 0; i < playerHashMap.size(); i++) {
+            VoiceBullet barrage = barrages.get(i);
+            MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
+            if (mediaPlayer != null && !mediaPlayer.isPlaying() && currentPosition > barrage.getVideoPosition()) {
+                mediaPlayer.seekTo((int) (currentPosition - barrage.getVideoPosition()));
+                mediaPlayer.start();
+            }
+        }
+
+//        handler.post(progressRunnable);
     }
 
     private Handler handler = new Handler(Looper.getMainLooper());

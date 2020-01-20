@@ -11,12 +11,12 @@ class TextBullet extends Bullet {
     int textColor = Color.WHITE;
     boolean local;
 
-    TextBullet(BulletScreenView parent, int videoPosition, String text) {
-        this(parent, videoPosition, text, false);
+    TextBullet(BulletScreenView parent, String id, int videoPosition, String text) {
+        this(parent, id, videoPosition, text, false);
     }
 
-    TextBullet(BulletScreenView parent, int videoPosition, String text, boolean local) {
-        super(parent, videoPosition);
+    TextBullet(BulletScreenView parent, String id, int videoPosition, String text, boolean local) {
+        super(parent, id, videoPosition);
         this.duration = 6000;
         this.text = text;
         this.textSize = density * 14;

@@ -16,7 +16,7 @@ import java.util.Random;
  * 可播放声音（player -> url）
  * 可能需要绘制内部动效（画线条）
  */
-class VoiceBullet extends Bullet {
+public class VoiceBullet extends Bullet {
     private static final int DP_WIDTH = 134;
     private static final int DP_HEIGHT = 30;
     private static final int ONCE_DRAW_TIMES = 20;
@@ -30,9 +30,10 @@ class VoiceBullet extends Bullet {
     boolean loadingBitmap;
     private int drawTimes = new Random().nextInt(ONCE_DRAW_TIMES);
     private List<FtLine> ftLines = new ArrayList<>();
+    boolean playing;
 
-    VoiceBullet(BulletScreenView parent, int videoPosition, String bitmapUrl, int duration) {
-        super(parent, videoPosition);
+    VoiceBullet(BulletScreenView parent, String id, int videoPosition, String bitmapUrl, int duration) {
+        super(parent, id, videoPosition);
         this.bitmapUrl = bitmapUrl;
         this.duration = duration;
     }
@@ -84,6 +85,10 @@ class VoiceBullet extends Bullet {
             ftLine.onDraw(canvas, paint, point, paddingLeft, drawTimes, ONCE_DRAW_TIMES);
         }
         paint.setStrokeCap(Paint.Cap.BUTT);
+    }
+
+    public String getVoiceUrl() {
+        return voiceUrl;
     }
 
     static class FtLine {
