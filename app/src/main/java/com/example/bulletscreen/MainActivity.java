@@ -1,11 +1,5 @@
 package com.example.bulletscreen;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.PagerSnapHelper;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -19,6 +13,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bulletscreen.bullet.Bullet;
 import com.example.bulletscreen.bullet.BulletGenerator;
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
         adapter = new Adapter(this, comments);
         rv.setAdapter(adapter);
     }
-
 
 
     static class Adapter extends RecyclerView.Adapter<Holder> {
@@ -85,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
             holder.bulletScreenView.setOnBulletClickListener(new BulletScreenView.OnBulletClickListener() {
                 @Override
                 public void onBulletClick(Bullet bullet) {
-                    if(bullet != null) {
+                    if (bullet != null) {
                         Toast.makeText(context, bullet.toString(), Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -93,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(holder.fakeVideoDurationAnimator.isPaused()) {
+                    if (holder.fakeVideoDurationAnimator.isPaused()) {
                         holder.fakeVideoDurationAnimator.resume();
                     } else {
                         holder.fakeVideoDurationAnimator.pause();
@@ -123,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onAnimationUpdate(ValueAnimator animation) {
                     int videoPosition = (int) animation.getAnimatedValue();
                     videoPosition = holder.videoView.getCurrentPosition();
-                    MulMediaPlayerController.getInstance().startPlay(videoPosition);
+                    MulMediaPlayerController.getInstance().onPositionChange(videoPosition);
 
                     holder.tvPosition.setText(videoPosition + "/" + VIDEO_DURATION);
                     holder.bulletScreenView.onVideoPosition(videoPosition);
@@ -167,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onViewDetachedFromWindow(@NonNull Holder holder) {
-            if(holder.fakeVideoDurationAnimator != null) {
+            if (holder.fakeVideoDurationAnimator != null) {
                 holder.fakeVideoDurationAnimator.end();
                 holder.fakeVideoDurationAnimator = null;
             }
