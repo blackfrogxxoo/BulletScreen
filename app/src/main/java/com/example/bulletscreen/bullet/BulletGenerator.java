@@ -25,13 +25,14 @@ public class BulletGenerator {
         for (int i = 0; i < commentList.size(); i++) {
             Comments.RowsBean comment = commentList.get(i);
             if (!TextUtils.isEmpty(comment.audio_file_addr)) {
-                int videoPosition = positions[j ++];
-                int duration = (int) (Math.random() * 13000 + 3000);
+                int videoPosition = positions[j];
+                int duration = totals[j];
                 VoiceBullet voiceBullet = generate(bulletScreenView, comment.id, videoPosition, comment.user_info.avatar_url, duration);
-                File file = new File(FileUtils.getExternalAssetsDir(bulletScreenView.getContext()), mp3s[j - 1]);
+                File file = new File(FileUtils.getExternalAssetsDir(bulletScreenView.getContext()), mp3s[j]);
                 voiceBullet.voiceUrl = file.getAbsolutePath();
                 bullets.add(voiceBullet);
-                if(j >= 4) j = 0;
+                j++;
+                if (j >= 4) j = 0;
             } else {
                 bullets.add(generate(bulletScreenView, comment.id, 3300, comment.contents, false));
             }
@@ -55,10 +56,18 @@ public class BulletGenerator {
             "1553418_016b100bf23cf677d0f02d6421eca93d.mp3"
     };
 
-    static int[] positions = new int[] {
+    static int[] positions = new int[]{
             600,
             1033,
             2316,
             8442
+    };
+
+
+    static int[] totals = new int[]{
+            25200,
+            25280,
+            24554,
+            22640
     };
 }
