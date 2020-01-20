@@ -21,8 +21,13 @@ import com.bumptech.glide.request.transition.Transition;
 import com.example.bulletscreen.CircleTransformWithBorder;
 import com.example.bulletscreen.R;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BulletScreenView extends BaseSurfaceView {
@@ -33,21 +38,25 @@ public class BulletScreenView extends BaseSurfaceView {
     private OnBulletClickListener onBulletClickListener;
     private int videoPosition;
     private boolean paused;
+    private Map<Integer, List<Bullet>> channels;
 
 
     public BulletScreenView(Context context, AttributeSet attrs) {
         super(context, attrs);
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
+            Bullet bullet;
             @Override
             public boolean onDown(MotionEvent e) {
-                return getTouchedBullet(e) != null;
+                Bullet bullet = getTouchedBullet(e);
+                if(bullet != null) this.bullet = bullet;
+                return bullet != null;
             }
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                if(onBulletClickListener != null) {
-                    onBulletClickListener.onBulletClick(getTouchedBullet(e));
+                if(onBulletClickListener != null && bullet != null) {
+                    onBulletClickListener.onBulletClick(bullet);
                 }
                 return true;
             }
@@ -79,7 +88,7 @@ public class BulletScreenView extends BaseSurfaceView {
         for(Bullet bullet : bulletList) {
             if(bullet.point == null) {
                 bullet.point = new Point();
-                bullet.point.y = (int) (Math.random() * getHeight()); // TODO 优化弹幕之间的距离
+                assignChannel(bullet);
                 bullet.point.x = getWidth();
             } else {
                 if(!paused) {
@@ -115,6 +124,45 @@ public class BulletScreenView extends BaseSurfaceView {
             }
             bullet.onDraw(canvas, paint);
         }
+    }
+
+    private void initChannels() {
+        // 根据view大小，切分多条channel，分别对应一个y
+        channels = new HashMap<>();
+        int y = (int) (20 * density);
+        while (y < getMeasuredHeight() - 40 * density) {
+            channels.put(y, new ArrayList<Bullet>());
+            y += 40 * density;
+        }
+    }
+    private Iterator<Integer> channelIterator; // 依次分配
+    private void assignChannel(Bullet target) {
+        if(channels == null) {
+            initChannels();
+        }
+        Set<Integer> keySet = channels.keySet();
+        if(channelIterator == null) {
+            channelIterator = keySet.iterator();
+        }
+        int traverseCount = 0;
+        while (traverseCount < keySet.size()) {
+            traverseCount ++;
+            if(!channelIterator.hasNext()) channelIterator = keySet.iterator();
+            int y = channelIterator.next();
+            List<Bullet> bullets = channels.get(y);
+            boolean hit = false;
+            for(Bullet bullet : bullets) {
+                if(Math.abs(bullet.videoPosition - target.videoPosition) < 3000) {
+                    hit = true;
+                    break;
+                }
+            }
+            if(!hit) {
+                target.point.y = y;
+                return;
+            }
+        }
+        target.point.y = (int) (Math.random() * (getHeight() - 40 * density)); // 没有空位，只能随机
     }
 
     public void addBullet(Bullet bullet) {
@@ -158,12 +206,12 @@ public class BulletScreenView extends BaseSurfaceView {
         this.videoPosition = position;
     }
 
-    public void setOnBulletClickListener(OnBulletClickListener listener) {
-        this.onBulletClickListener = listener;
-    }
-
     public boolean isPaused() {
         return paused;
+    }
+
+    public void setOnBulletClickListener(OnBulletClickListener listener) {
+        this.onBulletClickListener = listener;
     }
 
     public interface OnBulletClickListener {

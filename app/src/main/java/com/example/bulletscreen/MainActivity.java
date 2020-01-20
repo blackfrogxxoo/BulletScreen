@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     static class Adapter extends RecyclerView.Adapter<Holder> {
-        private static final int VIDEO_DURATION = 10000;
+        private static final int VIDEO_DURATION = 20000;
 
         private Context context;
         private Comments comments;
@@ -72,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             holder.bulletScreenView.setBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
+            holder.bulletScreenView.addBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
+            holder.bulletScreenView.addBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
+            holder.bulletScreenView.addBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
             holder.bulletScreenView.setOnBulletClickListener(new BulletScreenView.OnBulletClickListener() {
                 @Override
                 public void onBulletClick(Bullet bullet) {
