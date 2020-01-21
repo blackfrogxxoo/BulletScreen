@@ -22,6 +22,7 @@ import com.example.bulletscreen.bullet.Bullet;
 import com.example.bulletscreen.bullet.BulletGenerator;
 import com.example.bulletscreen.bullet.BulletScreenView;
 import com.example.bulletscreen.bullet.BulletHelper;
+import com.example.bulletscreen.bullet.VoiceBullet;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -95,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-        }, 0, 5);
+        }, 0, 20);
     }
 
 
@@ -172,8 +173,8 @@ public class MainActivity extends AppCompatActivity {
             holder.bulletScreenView.setOnBulletClickListener(new BulletScreenView.OnBulletClickListener() {
                 @Override
                 public void onBulletClick(Bullet bullet) {
-                    if(bullet != null) {
-                        Toast.makeText(context, bullet.toString(), Toast.LENGTH_SHORT).show();
+                    if(bullet instanceof VoiceBullet) {
+                        BulletHelper.INSTANCE.toggleVolume(bullet.getId());
                     }
                 }
             });

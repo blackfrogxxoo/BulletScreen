@@ -2,21 +2,22 @@ package com.example.bulletscreen.bullet;
 
 import android.media.MediaPlayer;
 import android.text.TextUtils;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public enum BulletHelper {
     INSTANCE;
     private Map<String, MediaPlayer> mediaPlayerMap = new HashMap<>();
+    private List<String> soundOffList = new ArrayList<>();
     private List<VoiceBullet> voiceBulletList = new ArrayList<>();
     private BulletScreenView bulletScreenView;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -38,7 +39,7 @@ public enum BulletHelper {
 
     private void addVoiceBullets(List<VoiceBullet> bullets) {
         voiceBulletList.addAll(bullets);
-        for(VoiceBullet bullet : bullets) {
+        for(final VoiceBullet bullet : bullets) {
             String id = bullet.getId();
             MediaPlayer mp = new MediaPlayer();
             mediaPlayerMap.put(id, mp);
@@ -110,6 +111,19 @@ public enum BulletHelper {
         return jump;
     }
 
+    public void toggleVolume(String id) {
+        MediaPlayer mp = mediaPlayerMap.get(id);
+        if (soundOffList.contains(id)) {
+            mp.setVolume(1, 1);
+            soundOffList.remove(id);
+            Toast.makeText(bulletScreenView.getContext(), "静音（关）", Toast.LENGTH_SHORT).show();
+        } else {
+            mp.setVolume(0, 0);
+            soundOffList.add(id);
+            Toast.makeText(bulletScreenView.getContext(), "静音（开）", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void pause(String id) {
         MediaPlayer mp = mediaPlayerMap.get(id);
         mp.pause();
@@ -119,13 +133,14 @@ public enum BulletHelper {
         MediaPlayer mp = mediaPlayerMap.get(id);
         mp.start();
         mp.seekTo(offset);
+        Log.i("fuck", "start: " + position + ", seekTo :" + offset);
     }
 
     public void onVideoPosition(final int position) {
         this.position = position;
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
+//        executor.execute(new Runnable() {
+//            @Override
+//            public void run() {
                 bulletScreenView.onVideoPosition(position);
                 for(VoiceBullet vb : voiceBulletList) {
                     if (vb.videoPosition <= position && !vb.playing) {
@@ -133,8 +148,8 @@ public enum BulletHelper {
                         vb.playing = true;
                     }
                 }
-            }
-        });
+//            }
+//        });
     }
 
     public void release(String id) {
@@ -167,6 +182,7 @@ public enum BulletHelper {
                 }
                 mediaPlayerMap.clear();
                 voiceBulletList.clear();
+                soundOffList.clear();
             }
         });
     }

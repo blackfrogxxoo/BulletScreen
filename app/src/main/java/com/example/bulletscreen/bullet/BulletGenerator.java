@@ -24,16 +24,20 @@ public class BulletGenerator {
         int j = 0;
         for (int i = 0; i < commentList.size(); i++) {
             Comments.RowsBean comment = commentList.get(i);
-            if (!TextUtils.isEmpty(comment.audio_file_addr) && j < 4) {
-                int videoPosition = positions[j];
-                int duration = totals[j];
-                VoiceBullet voiceBullet = generate(bulletScreenView, comment.id, videoPosition, comment.user_info.avatar_url, duration);
-                File file = new File(FileUtils.getExternalAssetsDir(bulletScreenView.getContext()), mp3s[j]);
-                voiceBullet.voiceUrl = file.getAbsolutePath();
-                bullets.add(voiceBullet);
-                j++;
+            if (!TextUtils.isEmpty(comment.audio_file_addr)) {
+                if(j < 4) {
+                    int videoPosition = positions[j];
+                    int duration = totals[j];
+                    VoiceBullet voiceBullet = generate(bulletScreenView, comment.id, videoPosition, comment.user_info.avatar_url, duration);
+                    File file = new File(FileUtils.getExternalAssetsDir(bulletScreenView.getContext()), mp3s[j]);
+                    voiceBullet.voiceUrl = file.getAbsolutePath();
+                    bullets.add(voiceBullet);
+                    j++;
+                } else {
+                    bullets.add(generate(bulletScreenView, comment.id, (int) (Math.random() * 10000 + 10000), comment.user_info.avatar_url, false));
+                }
             } else {
-                bullets.add(generate(bulletScreenView, comment.id, 3300, comment.contents, false));
+                bullets.add(generate(bulletScreenView, comment.id, (int) (Math.random() * 10000 + 10000), comment.contents + "❤❤❤❤❤❤️", false));
             }
 
         }
@@ -56,10 +60,10 @@ public class BulletGenerator {
     };
 
     static int[] positions = new int[]{
-            600,
+            600 - 50,
             1033,
-            2316,
-            8442
+            2316 - 300,
+            8442 - 100
     };
 
 
