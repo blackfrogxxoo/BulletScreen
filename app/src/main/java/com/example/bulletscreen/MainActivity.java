@@ -102,14 +102,9 @@ public class MainActivity extends AppCompatActivity {
     private VideoView videoView;
     private Holder holder;
     private void onNewHolder(@NonNull final Holder holder) {
-        new Thread() {
-            @Override
-            public void run() {
-                List<Bullet> bulletList = BulletGenerator.generate(holder.bulletScreenView, comments);
-                BulletHelper.INSTANCE.setBulletScreenView(holder.bulletScreenView);
-                BulletHelper.INSTANCE.addBullets(bulletList);
-            }
-        }.start();
+        List<Bullet> bulletList = BulletGenerator.generate(holder.bulletScreenView, comments);
+        BulletHelper.INSTANCE.setBulletScreenView(holder.bulletScreenView);
+        BulletHelper.INSTANCE.addBullets(bulletList);
         if(this.holder != null) {
             holder.videoView.pause();
         }
@@ -124,6 +119,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         videoView.start();
+    }
+
+    boolean pauseByScreenOff;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(videoView != null && videoView.isPlaying()) {
+            pauseByScreenOff = true;
+            videoView.pause();
+            BulletHelper.INSTANCE.pauseAll();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(pauseByScreenOff) {
+            pauseByScreenOff = false;
+            videoView.start();
+            BulletHelper.INSTANCE.startAll();
+        }
     }
 
     static class Adapter extends RecyclerView.Adapter<Holder> {
