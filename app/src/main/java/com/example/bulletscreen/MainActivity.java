@@ -166,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
             holder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-//                    holder.bulletScreenView.addBullet(
-//                            BulletGenerator.generate(holder.bulletScreenView, (int) holder.fakeVideoDurationAnimator.getAnimatedValue(), "我的弹幕", true));
+                    holder.bulletScreenView.addBullet(
+                            BulletGenerator.generate(holder.bulletScreenView, Math.random() + "" + Math.random(),  holder.videoView.getCurrentPosition(), "我的弹幕👍", true));
                 }
             });
             holder.bulletScreenView.setOnBulletClickListener(new BulletScreenView.OnBulletClickListener() {
