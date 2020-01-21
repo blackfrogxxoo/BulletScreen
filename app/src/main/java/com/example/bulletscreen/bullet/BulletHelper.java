@@ -74,13 +74,8 @@ public enum BulletHelper {
             public void run() {
                 Set<String> keySet = mediaPlayerMap.keySet();
                 for(String key : keySet) {
-                    boolean jump = false;
-                    for(VoiceBullet vb : voiceBulletList) {
-                        int endPlayingPosition = vb.videoPosition + vb.duration;
-                        if(endPlayingPosition < position) jump = true;
-                    }
-                    if(jump) continue;
                     MediaPlayer mp = mediaPlayerMap.get(key);
+                    if (ifJump(key, mp)) continue;
                     mp.pause();
                 }
                 bulletScreenView.onVideoPause();
@@ -94,18 +89,25 @@ public enum BulletHelper {
             public void run() {
                 Set<String> keySet = mediaPlayerMap.keySet();
                 for(String key : keySet) {
-                    boolean jump = false;
-                    for(VoiceBullet vb : voiceBulletList) {
-                        int endPlayingPosition = vb.videoPosition + vb.duration;
-                        if(endPlayingPosition < position) jump = true;
-                    }
-                    if(jump) continue;
                     MediaPlayer mp = mediaPlayerMap.get(key);
+                    if (ifJump(key, mp)) continue;
                     mp.start();
                 }
                 bulletScreenView.onVideoResume();
             }
         });
+    }
+
+    private boolean ifJump(String key, MediaPlayer mp) {
+        boolean jump = false;
+        for (VoiceBullet vb : voiceBulletList) {
+            if (TextUtils.equals(vb.getId(), key)) {
+                int endPlayingPosition = vb.videoPosition + mp.getDuration();
+                if (endPlayingPosition < position) jump = true;
+                break;
+            }
+        }
+        return jump;
     }
 
     public void pause(String id) {
@@ -126,7 +128,7 @@ public enum BulletHelper {
             public void run() {
                 bulletScreenView.onVideoPosition(position);
                 for(VoiceBullet vb : voiceBulletList) {
-                    if (vb.videoPosition < position && !vb.playing) {
+                    if (vb.videoPosition <= position && !vb.playing) {
                         start(vb.id, position - vb.videoPosition);
                         vb.playing = true;
                     }
