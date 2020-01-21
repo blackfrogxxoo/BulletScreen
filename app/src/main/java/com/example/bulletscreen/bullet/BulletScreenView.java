@@ -47,16 +47,17 @@ public class BulletScreenView extends BaseSurfaceView {
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
             Bullet bullet;
+
             @Override
             public boolean onDown(MotionEvent e) {
                 Bullet bullet = getTouchedBullet(e);
-                if(bullet != null) this.bullet = bullet;
+                if (bullet != null) this.bullet = bullet;
                 return bullet != null;
             }
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                if(onBulletClickListener != null && bullet != null) {
+                if (onBulletClickListener != null && bullet != null) {
                     onBulletClickListener.onBulletClick(bullet);
                 }
                 return true;
@@ -73,9 +74,9 @@ public class BulletScreenView extends BaseSurfaceView {
     private Bullet getTouchedBullet(MotionEvent e) {
         float x = e.getX();
         float y = e.getY();
-        for(Bullet bullet : bulletList) {
+        for (Bullet bullet : bulletList) {
             if (!bullet.isOutOfScreen()) {
-                if(bullet.rectF.left < x && bullet.rectF.right > x
+                if (bullet.rectF.left < x && bullet.rectF.right > x
                         && bullet.rectF.top < y && bullet.rectF.bottom > y) {
                     return bullet;
                 }
@@ -86,37 +87,37 @@ public class BulletScreenView extends BaseSurfaceView {
 
     @Override
     void drawS(Canvas canvas) {
-        for(Bullet bullet : bulletList) {
-            if(bullet.point == null) {
+        for (Bullet bullet : bulletList) {
+            if (bullet.point == null) {
                 bullet.point = new Point();
                 assignChannel(bullet);
                 bullet.point.x = getWidth();
             } else {
-                if(!paused) {
+                if (!paused) {
                     float dx = (bullet.rectF.width() + getWidth()) / bullet.duration;
                     int x = (int) (dx * (bullet.videoPosition - videoPosition) + getWidth());
                     bullet.point.x = x;
                 }
             }
 
-            if(bullet instanceof VoiceBullet) {
+            if (bullet instanceof VoiceBullet) {
                 final VoiceBullet vb = (VoiceBullet) bullet;
-                if(vb.bitmap == null && !vb.loadingBitmap) {
+                if (vb.bitmap == null && !vb.loadingBitmap) {
                     post(new Runnable() {
                         @Override
                         public void run() {
                             RequestBuilder<Bitmap> requestBuilder = Glide.with(getContext()).asBitmap().load(R.drawable.ic_launcher_foreground);
                             Glide.with(getContext()).asBitmap().load(vb.bitmapUrl)
-                                    .apply(new RequestOptions().transform(new CircleTransformWithBorder( 0, Color.TRANSPARENT)))
+                                    .apply(new RequestOptions().transform(new CircleTransformWithBorder(0, Color.TRANSPARENT)))
                                     .thumbnail(requestBuilder).into(
-                                        new SimpleTarget<Bitmap>() {
-                                            @Override
-                                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                                vb.bitmap = resource;
-                                                vb.loadingBitmap = false;
-                                            }
+                                    new SimpleTarget<Bitmap>() {
+                                        @Override
+                                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                            vb.bitmap = resource;
+                                            vb.loadingBitmap = false;
                                         }
-                                    );
+                                    }
+                            );
                         }
                     });
 
@@ -124,13 +125,6 @@ public class BulletScreenView extends BaseSurfaceView {
                 }
             }
             bullet.onDraw(canvas, paint);
-            if(bullet instanceof VoiceBullet) {
-                VoiceBullet vb = (VoiceBullet) bullet;
-                if(!vb.isOutOfScreen() && !vb.playing) {
-                    MulMediaPlayerController.getInstance().addBarrage(vb);
-                    vb.playing = true;
-                }
-            }
         }
     }
 
@@ -143,29 +137,31 @@ public class BulletScreenView extends BaseSurfaceView {
             y += 40 * density;
         }
     }
+
     private Iterator<Integer> channelIterator; // 依次分配
+
     private void assignChannel(Bullet target) {
-        if(channels == null) {
+        if (channels == null) {
             initChannels();
         }
         Set<Integer> keySet = channels.keySet();
-        if(channelIterator == null) {
+        if (channelIterator == null) {
             channelIterator = keySet.iterator();
         }
         int traverseCount = 0;
         while (traverseCount < keySet.size()) {
-            traverseCount ++;
-            if(!channelIterator.hasNext()) channelIterator = keySet.iterator();
+            traverseCount++;
+            if (!channelIterator.hasNext()) channelIterator = keySet.iterator();
             int y = channelIterator.next();
             List<Bullet> bullets = channels.get(y);
             boolean hit = false;
-            for(Bullet bullet : bullets) {
-                if(Math.abs(bullet.videoPosition - target.videoPosition) < 3000) {
+            for (Bullet bullet : bullets) {
+                if (Math.abs(bullet.videoPosition - target.videoPosition) < 3000) {
                     hit = true;
                     break;
                 }
             }
-            if(!hit) {
+            if (!hit) {
                 target.point.y = y;
                 return;
             }
@@ -182,7 +178,17 @@ public class BulletScreenView extends BaseSurfaceView {
         bulletList.clear();
         bulletList.addAll(bullets);
         Collections.sort(bulletList);
+
+
+        for (Bullet bullet : bullets) {
+            if (bullet instanceof VoiceBullet) {
+                VoiceBullet vb = (VoiceBullet) bullet;
+                MulMediaPlayerController.getInstance().addBarrage(vb);
+            }
+        }
+
     }
+
     public void addBullets(List<Bullet> bullets) {
         bulletList.addAll(bullets);
         Collections.sort(bulletList);

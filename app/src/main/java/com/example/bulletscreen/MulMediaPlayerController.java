@@ -15,13 +15,9 @@ public class MulMediaPlayerController {
     private static final String TAG = "MulMediaPlayer";
     private List<VoiceBullet> barrages = new ArrayList<>();
 
-    public void reset() {
-        barrages.clear();
-        for (MediaPlayer mediaPlayer : playerHashMap.values()) {
-            mediaPlayer.release();
-        }
-        playerHashMap.clear();
-    }
+    private HashMap<String, MediaPlayer> playerHashMap;
+    private HashMap<String, Boolean> playerStatusHashMap;
+
 
     private static class Singleton {
         static final MulMediaPlayerController context = new MulMediaPlayerController();
@@ -31,10 +27,21 @@ public class MulMediaPlayerController {
         return Singleton.context;
     }
 
-    private HashMap<String, MediaPlayer> playerHashMap;
 
     private MulMediaPlayerController() {
         playerHashMap = new HashMap<>();
+        playerStatusHashMap = new HashMap<>();
+    }
+
+
+    public void reset() {
+        Log.d(TAG, "=====reset");
+        barrages.clear();
+        for (MediaPlayer mediaPlayer : playerHashMap.values()) {
+            mediaPlayer.release();
+        }
+        playerHashMap.clear();
+        playerStatusHashMap.clear();
     }
 
     /*
@@ -56,6 +63,31 @@ public class MulMediaPlayerController {
         }
     }
 
+    public void pauseAllBarrage() {
+        for (int i = 0; i < playerHashMap.size(); i++) {
+            VoiceBullet barrage = barrages.get(i);
+            MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
+            if (mediaPlayer != null) {
+                mediaPlayer.pause();
+                Log.d(TAG, "=====pauseAllBarrage:" + i + barrage.getId());
+            }
+        }
+    }
+
+
+    public void resumeAllBarrage() {
+        for (int i = 0; i < playerHashMap.size(); i++) {
+            VoiceBullet barrage = barrages.get(i);
+            MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
+            if (mediaPlayer != null) {
+                mediaPlayer.start();
+                Log.d(TAG, "=====pauseAllBarrage:" + i + barrage.getId());
+            }
+        }
+
+    }
+
+
     /*
     静音某个弹幕
      */
@@ -66,10 +98,6 @@ public class MulMediaPlayerController {
             if (id.equals(barrage.getId())) {
                 if (mediaPlayer != null) {
                     mediaPlayer.setVolume(0, 0);
-                }
-            } else {
-                if (mediaPlayer != null) {
-                    mediaPlayer.setVolume(1, 1);
                 }
             }
         }
@@ -86,11 +114,19 @@ public class MulMediaPlayerController {
         for (int i = 0; i < playerHashMap.size(); i++) {
             VoiceBullet barrage = barrages.get(i);
             MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
-            if (mediaPlayer != null && !mediaPlayer.isPlaying() && currentPosition > barrage.getVideoPosition()) {
+            Boolean isPlay = false;
+            Boolean play = playerStatusHashMap.get(barrage.getId());
+            if (play != null) {
+                isPlay = play;
+            }
+            if (mediaPlayer != null && !isPlay && currentPosition > barrage.getVideoPosition()) {
                 mediaPlayer.seekTo((int) (currentPosition - barrage.getVideoPosition()));
                 mediaPlayer.start();
+                playerStatusHashMap.put(barrage.getId(), true);
             }
+
         }
+
 
     }
 
@@ -122,11 +158,13 @@ public class MulMediaPlayerController {
     }
 
     public void addBarrage(VoiceBullet barrage) {
+        Log.d(TAG, "=====addBarrage");
         barrages.add(barrage);
         MediaPlayer mediaPlayer = playerHashMap.get(barrage.getId());
         if (mediaPlayer == null) {
             mediaPlayer = new MediaPlayer();
             playerHashMap.put(barrage.getId(), mediaPlayer);
+            playerStatusHashMap.put(barrage.getId(), false);
         }
         try {
             File file = new File(barrage.getVoiceUrl());
@@ -150,7 +188,8 @@ public class MulMediaPlayerController {
 
             mediaPlayer.prepare();
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            Log.d(TAG, "======" + e.getLocalizedMessage());
         }
     }
 
