@@ -24,7 +24,7 @@ public class BulletGenerator {
         int j = 0;
         for (int i = 0; i < commentList.size(); i++) {
             Comments.RowsBean comment = commentList.get(i);
-            if (!TextUtils.isEmpty(comment.audio_file_addr)) {
+            if (!TextUtils.isEmpty(comment.audio_file_addr) && j < 4) {
                 int videoPosition = positions[j];
                 int duration = totals[j];
                 VoiceBullet voiceBullet = generate(bulletScreenView, comment.id, videoPosition, comment.user_info.avatar_url, duration);
@@ -32,7 +32,6 @@ public class BulletGenerator {
                 voiceBullet.voiceUrl = file.getAbsolutePath();
                 bullets.add(voiceBullet);
                 j++;
-                if (j >= 4) j = 0;
             } else {
                 bullets.add(generate(bulletScreenView, comment.id, 3300, comment.contents, false));
             }

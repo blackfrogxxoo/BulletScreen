@@ -1,31 +1,34 @@
 package com.example.bulletscreen;
 
-import android.animation.Animator;
-import android.animation.ValueAnimator;
-import android.content.Context;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.LinearInterpolator;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.VideoView;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.VideoView;
+
 import com.example.bulletscreen.bullet.Bullet;
 import com.example.bulletscreen.bullet.BulletGenerator;
 import com.example.bulletscreen.bullet.BulletScreenView;
+import com.example.bulletscreen.bullet.VoiceBullet;
+import com.example.bulletscreen.bullet.VoiceBulletPlayer;
 import com.google.gson.Gson;
 
 import java.io.File;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private static final String COMMENTS_TEXT =
@@ -33,25 +36,93 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rv;
     private Adapter adapter;
     private Comments comments;
-
+    private int rvPage = -1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         FileUtils.copyAssets2FileDir(this);
         rv = findViewById(R.id.rv);
-        LinearLayoutManager llm = new LinearLayoutManager(this);
+        final LinearLayoutManager llm = new LinearLayoutManager(this);
         rv.setLayoutManager(llm);
-        PagerSnapHelper mLinearSnapHelper = new PagerSnapHelper();
+        final PagerSnapHelper mLinearSnapHelper = new PagerSnapHelper();
         mLinearSnapHelper.attachToRecyclerView(rv);
         comments = new Gson().fromJson(COMMENTS_TEXT, Comments.class);
         adapter = new Adapter(this, comments);
         rv.setAdapter(adapter);
+        rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if(rvPage == -1) {
+                    rvPage = 0;
+                    Holder holder = (Holder) rv.findViewHolderForLayoutPosition(rvPage);
+                    onNewHolder(holder);
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if(newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    View centerView = mLinearSnapHelper.findSnapView(llm);
+                    int position = llm.getPosition(centerView);
+                    if(position != rvPage) {
+                        rvPage = position;
+                        Holder holder = (Holder) rv.findViewHolderForLayoutPosition(rvPage);
+                        onNewHolder(holder);
+                        Log.e("Snapped Item Position:","" + rvPage);
+                    }
+                }
+            }
+        });
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if(videoView != null) {
+                    try {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                int position = videoView.getCurrentPosition();
+                                holder.bulletScreenView.onVideoPosition(position);
+                                holder.tvPosition.setText(position + "/" + holder.videoView.getDuration());
+                            }
+                        });
+//                        MulMediaPlayerController.getInstance().startPlay(position);
+                    } catch (Exception e) {
+
+                    }
+                }
+            }
+        }, 0, 5);
     }
 
 
+    private VideoView videoView;
+    private Holder holder;
+    private void onNewHolder(@NonNull final Holder holder) {
+        if(this.holder != null) {
+            holder.videoView.suspend();
+            holder.bulletScreenView.onVideoStop();
+        }
+        this.holder = holder;
+        videoView = holder.videoView;
+//        MulMediaPlayerController.getInstance().reset();
+        File file = new File(FileUtils.getExternalAssetsDir(this), "bg.mp4");
+        Log.i("fuck", "onBindViewHolder: " + file.getAbsolutePath());
+        videoView.setVideoPath(file.getAbsolutePath());
+        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                videoView.start();
+            }
+        });
+        videoView.start();
+    }
+
     static class Adapter extends RecyclerView.Adapter<Holder> {
-        private static final int VIDEO_DURATION = 23000;
 
         private Context context;
         private Comments comments;
@@ -77,14 +148,17 @@ public class MainActivity extends AppCompatActivity {
 //                            BulletGenerator.generate(holder.bulletScreenView, (int) holder.fakeVideoDurationAnimator.getAnimatedValue(), "我的弹幕", true));
                 }
             });
-            holder.bulletScreenView.setBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
-//            holder.bulletScreenView.addBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
-//            holder.bulletScreenView.addBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
-//            holder.bulletScreenView.addBullets(BulletGenerator.generate(holder.bulletScreenView, comments));
+            List<Bullet> bulletList = BulletGenerator.generate(holder.bulletScreenView, comments);
+            holder.bulletScreenView.setBullets(bulletList);
+            for(Bullet bullet : bulletList) {
+                if(bullet instanceof VoiceBullet) {
+                    VoiceBulletPlayer.INSTANCE.addBullet((VoiceBullet) bullet);
+                }
+            }
             holder.bulletScreenView.setOnBulletClickListener(new BulletScreenView.OnBulletClickListener() {
                 @Override
                 public void onBulletClick(Bullet bullet) {
-                    if (bullet != null) {
+                    if(bullet != null) {
                         Toast.makeText(context, bullet.toString(), Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -92,84 +166,18 @@ public class MainActivity extends AppCompatActivity {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (holder.fakeVideoDurationAnimator.isPaused()) {
-                        holder.fakeVideoDurationAnimator.resume();
+                    if(holder.videoView.isPlaying()) {
+                        holder.videoView.pause();
                     } else {
-                        holder.fakeVideoDurationAnimator.pause();
+                        holder.videoView.resume();
                     }
                 }
             });
-            File file = new File(FileUtils.getExternalAssetsDir(context), "bg.mp4");
-            Log.i("fuck", "onBindViewHolder: " + file.getAbsolutePath());
-            holder.videoView.setVideoPath(file.getAbsolutePath());
-            holder.videoView.start();
         }
 
         @Override
         public int getItemCount() {
             return 100;
-        }
-
-        @Override
-        public void onViewAttachedToWindow(@NonNull final Holder holder) {
-            holder.fakeVideoDurationAnimator = ValueAnimator.ofInt(0, VIDEO_DURATION);
-            holder.fakeVideoDurationAnimator.setDuration(VIDEO_DURATION);
-            holder.fakeVideoDurationAnimator.setInterpolator(new LinearInterpolator());
-            holder.fakeVideoDurationAnimator.setRepeatMode(ValueAnimator.RESTART);
-            holder.fakeVideoDurationAnimator.setRepeatCount(ValueAnimator.INFINITE);
-            holder.fakeVideoDurationAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    int videoPosition = (int) animation.getAnimatedValue();
-                    videoPosition = holder.videoView.getCurrentPosition();
-                    MulMediaPlayerController.getInstance().onPositionChange(videoPosition);
-
-                    holder.tvPosition.setText(videoPosition + "/" + VIDEO_DURATION);
-                    holder.bulletScreenView.onVideoPosition(videoPosition);
-                }
-            });
-            holder.fakeVideoDurationAnimator.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                    MulMediaPlayerController.getInstance().reset();
-                    holder.bulletScreenView.onVideoStart();
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    holder.bulletScreenView.onVideoStop();
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    holder.bulletScreenView.onVideoStop();
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                    holder.bulletScreenView.onVideoStart();
-                }
-            });
-            holder.fakeVideoDurationAnimator.addPauseListener(new Animator.AnimatorPauseListener() {
-                @Override
-                public void onAnimationPause(Animator animation) {
-                    holder.bulletScreenView.onVideoPause();
-                }
-
-                @Override
-                public void onAnimationResume(Animator animation) {
-                    holder.bulletScreenView.onVideoResume();
-                }
-            });
-            holder.fakeVideoDurationAnimator.start();
-        }
-
-        @Override
-        public void onViewDetachedFromWindow(@NonNull Holder holder) {
-            if (holder.fakeVideoDurationAnimator != null) {
-                holder.fakeVideoDurationAnimator.end();
-                holder.fakeVideoDurationAnimator = null;
-            }
         }
     }
 
@@ -178,8 +186,6 @@ public class MainActivity extends AppCompatActivity {
         Button button;
         BulletScreenView bulletScreenView;
         VideoView videoView;
-
-        ValueAnimator fakeVideoDurationAnimator;
 
         public Holder(@NonNull View itemView) {
             super(itemView);

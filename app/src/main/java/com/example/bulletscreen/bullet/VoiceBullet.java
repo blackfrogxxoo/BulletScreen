@@ -6,7 +6,9 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.media.MediaPlayer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -36,6 +38,10 @@ public class VoiceBullet extends Bullet {
         super(parent, id, videoPosition);
         this.bitmapUrl = bitmapUrl;
         this.duration = duration;
+    }
+
+    public void setVoiceUrl(String voiceUrl) {
+        this.voiceUrl = voiceUrl;
     }
 
     private float calculateWidth() {
@@ -89,6 +95,10 @@ public class VoiceBullet extends Bullet {
 
     public String getVoiceUrl() {
         return voiceUrl;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     static class FtLine {

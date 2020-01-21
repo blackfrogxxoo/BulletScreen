@@ -19,7 +19,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.bulletscreen.CircleTransformWithBorder;
-import com.example.bulletscreen.MulMediaPlayerController;
 import com.example.bulletscreen.R;
 
 import java.util.ArrayList;
@@ -126,8 +125,8 @@ public class BulletScreenView extends BaseSurfaceView {
             bullet.onDraw(canvas, paint);
             if(bullet instanceof VoiceBullet) {
                 VoiceBullet vb = (VoiceBullet) bullet;
-                if(!vb.isOutOfScreen() && !vb.playing) {
-                    MulMediaPlayerController.getInstance().addBarrage(vb);
+                if(vb.videoPosition < videoPosition && !vb.playing) {
+                    VoiceBulletPlayer.INSTANCE.start(vb.id);
                     vb.playing = true;
                 }
             }
@@ -208,6 +207,7 @@ public class BulletScreenView extends BaseSurfaceView {
 
     public void onVideoStop() {
         // do nothing
+        paused = true;
     }
 
     public void onVideoPosition(int position) {
