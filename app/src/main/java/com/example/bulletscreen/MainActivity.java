@@ -21,8 +21,7 @@ import android.widget.VideoView;
 import com.example.bulletscreen.bullet.Bullet;
 import com.example.bulletscreen.bullet.BulletGenerator;
 import com.example.bulletscreen.bullet.BulletScreenView;
-import com.example.bulletscreen.bullet.VoiceBullet;
-import com.example.bulletscreen.bullet.VoiceBulletPlayer;
+import com.example.bulletscreen.bullet.BulletHelper;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -86,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 int position = videoView.getCurrentPosition();
-                                holder.bulletScreenView.onVideoPosition(position);
+                                BulletHelper.INSTANCE.onVideoPosition(position);
                                 holder.tvPosition.setText(position + "/" + holder.videoView.getDuration());
                             }
                         });
@@ -103,20 +102,25 @@ public class MainActivity extends AppCompatActivity {
     private VideoView videoView;
     private Holder holder;
     private void onNewHolder(@NonNull final Holder holder) {
+        new Thread() {
+            @Override
+            public void run() {
+                List<Bullet> bulletList = BulletGenerator.generate(holder.bulletScreenView, comments);
+                BulletHelper.INSTANCE.setBulletScreenView(holder.bulletScreenView);
+                BulletHelper.INSTANCE.addBullets(bulletList);
+            }
+        }.start();
         if(this.holder != null) {
-            holder.videoView.suspend();
-            holder.bulletScreenView.onVideoStop();
+            holder.videoView.pause();
         }
         this.holder = holder;
         videoView = holder.videoView;
 //        MulMediaPlayerController.getInstance().reset();
-        File file = new File(FileUtils.getExternalAssetsDir(this), "bg.mp4");
-        Log.i("fuck", "onBindViewHolder: " + file.getAbsolutePath());
-        videoView.setVideoPath(file.getAbsolutePath());
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 videoView.start();
+                BulletHelper.INSTANCE.onVideoRestart();
             }
         });
         videoView.start();
@@ -148,13 +152,6 @@ public class MainActivity extends AppCompatActivity {
 //                            BulletGenerator.generate(holder.bulletScreenView, (int) holder.fakeVideoDurationAnimator.getAnimatedValue(), "我的弹幕", true));
                 }
             });
-            List<Bullet> bulletList = BulletGenerator.generate(holder.bulletScreenView, comments);
-            holder.bulletScreenView.setBullets(bulletList);
-            for(Bullet bullet : bulletList) {
-                if(bullet instanceof VoiceBullet) {
-                    VoiceBulletPlayer.INSTANCE.addBullet((VoiceBullet) bullet);
-                }
-            }
             holder.bulletScreenView.setOnBulletClickListener(new BulletScreenView.OnBulletClickListener() {
                 @Override
                 public void onBulletClick(Bullet bullet) {
@@ -168,11 +165,16 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     if(holder.videoView.isPlaying()) {
                         holder.videoView.pause();
+                        BulletHelper.INSTANCE.pauseAll();
                     } else {
-                        holder.videoView.resume();
+                        holder.videoView.start();
+                        BulletHelper.INSTANCE.startAll();
                     }
                 }
             });
+            File file = new File(FileUtils.getExternalAssetsDir(context), "bg.mp4");
+            Log.i("fuck", "onBindViewHolder: " + file.getAbsolutePath());
+            holder.videoView.setVideoPath(file.getAbsolutePath());
         }
 
         @Override

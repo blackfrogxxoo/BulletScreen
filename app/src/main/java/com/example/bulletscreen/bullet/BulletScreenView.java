@@ -123,13 +123,6 @@ public class BulletScreenView extends BaseSurfaceView {
                 }
             }
             bullet.onDraw(canvas, paint);
-            if(bullet instanceof VoiceBullet) {
-                VoiceBullet vb = (VoiceBullet) bullet;
-                if(vb.videoPosition < videoPosition && !vb.playing) {
-                    VoiceBulletPlayer.INSTANCE.start(vb.id);
-                    vb.playing = true;
-                }
-            }
         }
     }
 

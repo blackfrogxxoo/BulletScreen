@@ -1,41 +1,38 @@
 package com.example.bulletscreen.bullet;
 
 import android.media.MediaPlayer;
-
-import com.example.bulletscreen.bullet.Bullet;
-import com.example.bulletscreen.bullet.VoiceBullet;
+import android.text.TextUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public enum VoiceBulletPlayer {
+public enum BulletHelper {
     INSTANCE;
     private Map<String, MediaPlayer> mediaPlayerMap = new HashMap<>();
-    private List<VoiceBullet> bulletList = new ArrayList<>();
+    private List<VoiceBullet> voiceBulletList = new ArrayList<>();
     private BulletScreenView bulletScreenView;
 
     /**
      * 切换视频时调用，瞬发
      */
     public void setBulletScreenView(BulletScreenView bulletScreenView) {
+        releaseAll();
         this.bulletScreenView = bulletScreenView;
     }
 
-    public void addBullet(VoiceBullet bullet) {
+    private void addVoiceBullet(VoiceBullet bullet) {
         List<VoiceBullet> bullets = new ArrayList<>();
         bullets.add(bullet);
-        addBullets(bullets);
+        addVoiceBullets(bullets);
     }
 
-    /**
-     * 切换视频后，拉取数据，再add
-     */
-    public void addBullets(List<VoiceBullet> bullets) {
-        bulletList.addAll(bullets);
+    private void addVoiceBullets(List<VoiceBullet> bullets) {
+        voiceBulletList.addAll(bullets);
         for(VoiceBullet bullet : bullets) {
             String id = bullet.getId();
             MediaPlayer mp = new MediaPlayer();
@@ -49,12 +46,25 @@ public enum VoiceBulletPlayer {
         }
     }
 
+    /**
+     * 切换视频后，拉取数据，再add
+     */
+    public void addBullets(List<Bullet> bullets) {
+        bulletScreenView.setBullets(bullets);
+        for(Bullet bullet : bullets) {
+            if(bullet instanceof VoiceBullet) {
+                addVoiceBullet((VoiceBullet) bullet);
+            }
+        }
+    }
+
     public void pauseAll() {
         Set<String> keySet = mediaPlayerMap.keySet();
         for(String key : keySet) {
             MediaPlayer mp = mediaPlayerMap.get(key);
             mp.pause();
         }
+        bulletScreenView.onVideoPause();
     }
 
     public void startAll() {
@@ -63,6 +73,7 @@ public enum VoiceBulletPlayer {
             MediaPlayer mp = mediaPlayerMap.get(key);
             mp.start();
         }
+        bulletScreenView.onVideoResume();
     }
 
     public void pause(String id) {
@@ -77,6 +88,12 @@ public enum VoiceBulletPlayer {
 
     public void onVideoPosition(int position) {
         bulletScreenView.onVideoPosition(position);
+        for(VoiceBullet vb : voiceBulletList) {
+            if (vb.videoPosition < position && !vb.playing) {
+                start(vb.id);
+                vb.playing = true;
+            }
+        }
     }
 
     public void release(String id) {
@@ -84,6 +101,33 @@ public enum VoiceBulletPlayer {
         mp.release();
         mp = null;
         mediaPlayerMap.remove(id);
+        VoiceBullet toRemove = null;
+        for(VoiceBullet vb : voiceBulletList) {
+            if(TextUtils.equals(vb.getId(), id)) {
+                toRemove = vb;
+                break;
+            }
+        }
+        if(toRemove != null) {
+            voiceBulletList.remove(toRemove);
+            toRemove = null;
+        }
     }
 
+    private void releaseAll() {
+        Set<String> keySet = mediaPlayerMap.keySet();
+        for (String id : keySet) {
+            MediaPlayer mp = mediaPlayerMap.get(id);
+            mp.release();
+            mp = null;
+        }
+        mediaPlayerMap.clear();
+        voiceBulletList.clear();
+    }
+
+    public void onVideoRestart() {
+        for(VoiceBullet vb : voiceBulletList) {
+            vb.playing = false;
+        }
+    }
 }
