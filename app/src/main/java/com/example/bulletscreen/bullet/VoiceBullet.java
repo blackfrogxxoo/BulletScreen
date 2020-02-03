@@ -43,6 +43,7 @@ public class VoiceBullet extends Bullet {
     private int drawTimes = new Random().nextInt(ONCE_DRAW_TIMES);
     private List<FtLine> ftLines = new ArrayList<>();
     boolean playing;
+    boolean soundOff;
 
     VoiceBullet(BulletScreenView parent, String id, int videoPosition, String bitmapUrl, int duration) {
         super(parent, id, videoPosition);
@@ -52,6 +53,14 @@ public class VoiceBullet extends Bullet {
 
     public void setVoiceUrl(String voiceUrl) {
         this.voiceUrl = voiceUrl;
+    }
+
+    public void setSoundOff(boolean off) {
+        this.soundOff = off;
+    }
+
+    public boolean isSoundOff() {
+        return soundOff;
     }
 
     private float calculateWidth() {
@@ -106,7 +115,9 @@ public class VoiceBullet extends Bullet {
             canvas.drawBitmap(bitmap, matrix, paint);
         }
         if(!parent.isPaused()) {
-            drawTimes ++; // 用drawTimes来模拟Animator
+            if(!soundOff) {
+                drawTimes++; // 用drawTimes来模拟Animator
+            }
             if(drawTimes > ONCE_DRAW_TIMES) {
                 drawTimes = 0;
             }
@@ -131,6 +142,10 @@ public class VoiceBullet extends Bullet {
             ftLine.onDraw(canvas, paint, point, paddingLeft, drawTimes, ONCE_DRAW_TIMES);
         }
         paint.setStrokeCap(Paint.Cap.BUTT);
+        if(soundOff) {
+            paint.setColor(Color.parseColor("#55000000"));
+            canvas.drawRoundRect(rectF, radius, radius, paint);
+        }
     }
 
     public String getVoiceUrl() {

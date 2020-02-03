@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 public enum BulletHelper {
     INSTANCE;
     private Map<String, MediaPlayer> mediaPlayerMap = new HashMap<>();
-    private List<String> soundOffList = new ArrayList<>();
     private List<VoiceBullet> voiceBulletList = new ArrayList<>();
     private BulletScreenView bulletScreenView;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -113,14 +112,19 @@ public enum BulletHelper {
 
     public void toggleVolume(String id) {
         MediaPlayer mp = mediaPlayerMap.get(id);
-        if (soundOffList.contains(id)) {
-            mp.setVolume(1, 1);
-            soundOffList.remove(id);
-            Toast.makeText(bulletScreenView.getContext(), "静音（关）", Toast.LENGTH_SHORT).show();
-        } else {
-            mp.setVolume(0, 0);
-            soundOffList.add(id);
-            Toast.makeText(bulletScreenView.getContext(), "静音（开）", Toast.LENGTH_SHORT).show();
+        for(VoiceBullet vb : voiceBulletList) {
+            if(TextUtils.equals(vb.id, id)) {
+                if(!vb.isSoundOff()) {
+                    mp.setVolume(0, 0);
+                    Toast.makeText(bulletScreenView.getContext(), "静音（开）", Toast.LENGTH_SHORT).show();
+                    vb.setSoundOff(true);
+                } else {
+                    mp.setVolume(1, 1);
+                    Toast.makeText(bulletScreenView.getContext(), "静音（关）", Toast.LENGTH_SHORT).show();
+                    vb.setSoundOff(false);
+                }
+                break;
+            }
         }
     }
 
@@ -182,7 +186,6 @@ public enum BulletHelper {
                 }
                 mediaPlayerMap.clear();
                 voiceBulletList.clear();
-                soundOffList.clear();
             }
         });
     }
