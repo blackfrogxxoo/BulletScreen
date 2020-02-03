@@ -23,15 +23,18 @@ class TextBullet extends Bullet {
         this.local = local;
     }
 
-
     @Override
-    void draw(Canvas canvas, Paint paint) {
-        paint.setTextSize(textSize);
+    void prepareDraw(Paint paint) {
         rectF.left = point.x;
         rectF.top = point.y;
         float textWidth = paint.measureText(text);
         rectF.right = rectF.left + textWidth + 2 * DP_PADDING * density;
         rectF.bottom = rectF.top + textSize + 2 * DP_PADDING * density;
+    }
+
+    @Override
+    void draw(Canvas canvas, Paint paint) {
+        paint.setTextSize(textSize);
         if(local) {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(density);

@@ -6,9 +6,18 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.media.MediaPlayer;
 
-import java.io.IOException;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.example.bulletscreen.CircleTransformWithBorder;
+import com.example.bulletscreen.R;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -49,18 +58,48 @@ public class VoiceBullet extends Bullet {
         return DP_WIDTH * density;
     }
 
-
     @Override
-    void draw(Canvas canvas, Paint paint) {
-        float radius = DP_HEIGHT * density;
+    void prepareDraw(Paint paint) {
         rectF.left = point.x;
         rectF.top = point.y;
         rectF.right = rectF.left + calculateWidth();
         rectF.bottom = rectF.top + DP_HEIGHT * density;
+        loadAvatar();
+    }
+
+
+    private void loadAvatar() {
+        if(bitmap == null && !loadingBitmap) {
+            parent.post(new Runnable() {
+                @Override
+                public void run() {
+                    RequestBuilder<Bitmap> requestBuilder = Glide.with(parent.getContext()).asBitmap().load(R.drawable.ic_launcher_foreground);
+                    Glide.with(parent.getContext()).asBitmap().load(bitmapUrl)
+                            .apply(new RequestOptions().transform(new CircleTransformWithBorder( 0, Color.TRANSPARENT)))
+                            .thumbnail(requestBuilder).into(
+                            new SimpleTarget<Bitmap>() {
+                                @Override
+                                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                    bitmap = resource;
+                                    loadingBitmap = false;
+                                }
+                            }
+                    );
+                }
+            });
+
+            loadingBitmap = true;
+        }
+    }
+
+
+    @Override
+    void draw(Canvas canvas, Paint paint) {
+        float radius = DP_HEIGHT * density;
         paint.setColor(Color.parseColor("#80000000"));
         canvas.drawRoundRect(rectF, radius, radius, paint);
         paint.setColor(Color.WHITE);
-        if (bitmap != null) {
+        if(bitmap != null) {
             float size = rectF.bottom - rectF.top - 2 * DP_AVATAR_PADDING * density;
             matrix.setScale(size / bitmap.getWidth(), size / bitmap.getHeight());
             matrix.postTranslate(point.x + DP_AVATAR_PADDING * density, point.y + DP_AVATAR_PADDING * density);

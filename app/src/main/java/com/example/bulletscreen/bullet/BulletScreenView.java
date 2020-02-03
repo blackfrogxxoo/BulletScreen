@@ -1,28 +1,14 @@
 package com.example.bulletscreen.bullet;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestBuilder;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.transition.Transition;
-import com.example.bulletscreen.CircleTransformWithBorder;
-import com.example.bulletscreen.R;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -88,60 +74,33 @@ public class BulletScreenView extends BaseSurfaceView {
     @Override
     void drawS(Canvas canvas) {
         for(Bullet bullet : bulletList) {
-            if(bullet.point == null) {
-                bullet.point = new Point();
-                assignChannel(bullet);
+            bullet.prepareDraw(paint);
+            if(!bullet.isOutOfScreen()) {
+                bullet.onDraw(canvas, paint);
+            }
+        }
+    }
+
+    private void calculatePoint(Bullet bullet) {
+        if(paused) return;
+        if(bullet instanceof VoiceBullet) {
+            // 0.2s进/出
+            int dPosition = videoPosition - bullet.videoPosition;
+            if(dPosition < 0) { // 未进入
                 bullet.point.x = getWidth();
-            } else {
-                if(!paused) {
-                    if(bullet instanceof VoiceBullet) {
-                        // 0.2s进/出
-                        int dPosition = videoPosition - bullet.videoPosition;
-                        if(dPosition < 0) { // 未进入
-                            bullet.point.x = getWidth();
-                        } else if(dPosition < VOICE_IN_DURATION) { // 进入
-                            float dx = bullet.rectF.width() / VOICE_IN_DURATION ;
-                            bullet.point.x = (int) (-dx * dPosition + getWidth());
-                        } else if(dPosition < bullet.duration - VOICE_IN_DURATION) { // 中间
-                            float dx = (-bullet.rectF.width() + getWidth()) / (bullet.duration - VOICE_IN_DURATION * 2);
-                            bullet.point.x = (int) (-dx * dPosition - bullet.rectF.width() + getWidth());
-                        } else { // 飞出
-                            float dx = bullet.rectF.width() / VOICE_IN_DURATION ;
-                            bullet.point.x = (int) (-dx * (dPosition - bullet.duration + VOICE_IN_DURATION));
-                        }
-                    } else {
-                        float dx = (bullet.rectF.width() + getWidth()) / bullet.duration;
-                        int x = (int) (dx * (bullet.videoPosition - videoPosition) + getWidth());
-                        bullet.point.x = x;
-                    }
-                }
+            } else if(dPosition < VOICE_IN_DURATION) { // 进入
+                float dx = bullet.rectF.width() / VOICE_IN_DURATION;
+                bullet.point.x = (int) (-dx * dPosition + getWidth());
+            } else if(dPosition < bullet.duration - VOICE_IN_DURATION) { // 中间
+                float dx = (-bullet.rectF.width() + getWidth()) / (bullet.duration - VOICE_IN_DURATION * 2);
+                bullet.point.x = (int) (-dx * dPosition - bullet.rectF.width() + getWidth());
+            } else { // 飞出
+                float dx = bullet.rectF.width() / VOICE_IN_DURATION;
+                bullet.point.x = (int) (-dx * (dPosition - bullet.duration + VOICE_IN_DURATION));
             }
-
-            if(bullet instanceof VoiceBullet) {
-                final VoiceBullet vb = (VoiceBullet) bullet;
-                if(vb.bitmap == null && !vb.loadingBitmap) {
-                    post(new Runnable() {
-                        @Override
-                        public void run() {
-                            RequestBuilder<Bitmap> requestBuilder = Glide.with(getContext()).asBitmap().load(R.drawable.ic_launcher_foreground);
-                            Glide.with(getContext()).asBitmap().load(vb.bitmapUrl)
-                                    .apply(new RequestOptions().transform(new CircleTransformWithBorder( 0, Color.TRANSPARENT)))
-                                    .thumbnail(requestBuilder).into(
-                                        new SimpleTarget<Bitmap>() {
-                                            @Override
-                                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                                vb.bitmap = resource;
-                                                vb.loadingBitmap = false;
-                                            }
-                                        }
-                                    );
-                        }
-                    });
-
-                    vb.loadingBitmap = true;
-                }
-            }
-            bullet.onDraw(canvas, paint);
+        } else {
+            float dx = (bullet.rectF.width() + getWidth()) / bullet.duration;
+            bullet.point.x = (int) (dx * (bullet.videoPosition - videoPosition) + getWidth());
         }
     }
 
@@ -186,17 +145,31 @@ public class BulletScreenView extends BaseSurfaceView {
 
     public void addBullet(Bullet bullet) {
         bulletList.add(bullet);
-        Collections.sort(bulletList); // TODO 后续可做index的范围控制
+        bullet.point = new Point();
+        assignChannel(bullet);
+        bullet.point.x = getWidth();
+//        Collections.sort(bulletList); // TODO 后续可做index的范围控制
     }
 
     public void setBullets(List<Bullet> bullets) {
         bulletList.clear();
+        for(Bullet bullet : bullets) {
+            bullet.point = new Point();
+            assignChannel(bullet);
+            bullet.point.x = getWidth();
+        }
         bulletList.addAll(bullets);
-        Collections.sort(bulletList);
+//        Collections.sort(bulletList);
     }
+
     public void addBullets(List<Bullet> bullets) {
         bulletList.addAll(bullets);
-        Collections.sort(bulletList);
+        for(Bullet bullet : bullets) {
+            bullet.point = new Point();
+            assignChannel(bullet);
+            bullet.point.x = getWidth();
+        }
+//        Collections.sort(bulletList);
     }
 
     public void onVideoPrepare() {
@@ -208,12 +181,10 @@ public class BulletScreenView extends BaseSurfaceView {
     }
 
     public void onVideoPause() {
-        // TODO 弹幕暂停
         paused = true;
     }
 
     public void onVideoResume() {
-        // TODO 弹幕继续
         paused = false;
     }
 
@@ -224,6 +195,9 @@ public class BulletScreenView extends BaseSurfaceView {
 
     public void onVideoPosition(int position) {
         this.videoPosition = position;
+        for(Bullet bullet : bulletList) {
+            calculatePoint(bullet);
+        }
     }
 
     public boolean isPaused() {

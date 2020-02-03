@@ -35,6 +35,8 @@ public abstract class Bullet implements Comparable {
 
     abstract void draw(Canvas canvas, Paint paint);
 
+    abstract void prepareDraw(Paint paint);
+
     boolean isOutOfScreen() {
         return rectF.left > parent.getRight() || rectF.right < parent.getLeft();
     }
