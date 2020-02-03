@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.example.bulletscreen.bullet.VoiceBullet.VOICE_IN_DURATION;
+
 public class BulletScreenView extends BaseSurfaceView {
     private static final String TAG = "BulletScreenView";
     private Paint paint;
@@ -92,9 +94,26 @@ public class BulletScreenView extends BaseSurfaceView {
                 bullet.point.x = getWidth();
             } else {
                 if(!paused) {
-                    float dx = (bullet.rectF.width() + getWidth()) / bullet.duration;
-                    int x = (int) (dx * (bullet.videoPosition - videoPosition) + getWidth());
-                    bullet.point.x = x;
+                    if(bullet instanceof VoiceBullet) {
+                        // 0.2s进/出
+                        int dPosition = videoPosition - bullet.videoPosition;
+                        if(dPosition < 0) { // 未进入
+                            bullet.point.x = getWidth();
+                        } else if(dPosition < VOICE_IN_DURATION) { // 进入
+                            float dx = bullet.rectF.width() / VOICE_IN_DURATION ;
+                            bullet.point.x = (int) (-dx * dPosition + getWidth());
+                        } else if(dPosition < bullet.duration - VOICE_IN_DURATION) { // 中间
+                            float dx = (-bullet.rectF.width() + getWidth()) / (bullet.duration - VOICE_IN_DURATION * 2);
+                            bullet.point.x = (int) (-dx * dPosition - bullet.rectF.width() + getWidth());
+                        } else { // 飞出
+                            float dx = bullet.rectF.width() / VOICE_IN_DURATION ;
+                            bullet.point.x = (int) (-dx * (dPosition - bullet.duration + VOICE_IN_DURATION));
+                        }
+                    } else {
+                        float dx = (bullet.rectF.width() + getWidth()) / bullet.duration;
+                        int x = (int) (dx * (bullet.videoPosition - videoPosition) + getWidth());
+                        bullet.point.x = x;
+                    }
                 }
             }
 

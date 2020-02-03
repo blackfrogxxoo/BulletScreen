@@ -19,6 +19,7 @@ import java.util.Random;
  * 可能需要绘制内部动效（画线条）
  */
 public class VoiceBullet extends Bullet {
+    public static final int VOICE_IN_DURATION = 200;
     private static final int DP_WIDTH = 134;
     private static final int DP_HEIGHT = 30;
     private static final int ONCE_DRAW_TIMES = 20;
